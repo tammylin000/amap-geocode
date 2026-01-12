@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>地理编码(地址->经纬度)</title>
+    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css"/>
+    <style>
+        html,body,#container{
+            height:100%;
+            width:100%;
+        }
+        .btn{
+            width:10rem;
+            margin-left:6.8rem;   
+        }
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<div class="input-card" style='width:28rem;'>
+    <label style='color:grey'>地理编码，根据地址获取经纬度坐标</label>
+    <div class="input-item">
+            <div class="input-item-prepend"><span class="input-item-text" >地址</span></div>
+            <input id='address' type="text" value='' >
+    </div>
+    <div class="input-item">
+            <div class="input-item-prepend"><span class="input-item-text">经纬度</span></div>
+            <input id='lnglat' disabled type="text">
+    </div>
+    <input id="geo" type="button" class="btn" value="地址 -> 经纬度" />
+</div>
+
+<!-- 1. 异步加载高德API，确保加载完成后执行逻辑 -->
+<script type="text/javascript">
+    window._AMapSecurityConfig = {
+        // 若你的Key开启了安全密钥，需填写这个（没有则注释）
+        // securityJsCode: "956638c128dbca0c7060284630830f19"
+    };
+    // 动态加载高德API
+    function loadAMapScript() {
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'https://webapi.amap.com/maps?v=2.0&key=5215182a065a92dd6b2d5224b4ddf347&plugin=AMap.Geocoder&callback=initAMap';
+        script.onerror = function() {
+            alert('高德地图API加载失败，请检查Key是否正确！');
+        };
+        document.body.appendChild(script);
+    }
+
+    // 2. API加载完成后初始化地图和逻辑
+    function initAMap() {
+        // 初始化地图
+        var map = new AMap.Map("container", {
+            resizeEnable: true,
+            center: [116.397428, 39.90923],
+            zoom: 13
+        });
+        
+        // 初始化地理编码插件
+        var geocoder = new AMap.Geocoder({
+            city: "全国"
+        });
+        
+        var marker = new AMap.Marker();
+        
+        // 核心地理编码函数
+        function geoCode() {
+            var address = document.getElementById('address').value.trim();
+            if (!address) {
+                alert("请输入有效地址！");
+                return;
+            }
+            
+            geocoder.getLocation(address, function(status, result) {
+                if (status === 'complete' && result.geocodes.length) {
+                    var lnglat = result.geocodes[0].location;
+                    // 显式拼接经纬度（避免显示[object Object]）
+                    document.getElementById('lnglat').value = lnglat.lng + "," + lnglat.lat;
+                    // 地图定位并标记
+                    marker.setPosition(lnglat);
+                    map.add(marker);
+                    map.setFitView(marker);
+                } else {
+                    document.getElementById('lnglat').value = '';
+                    alert('地址解析失败：' + (result.info || '地址格式错误或不存在'));
+                }
+            });
+        }
+
+        // 绑定事件
+        document.getElementById("geo").onclick = geoCode;
+        document.getElementById('address').onkeydown = function(e) {
+            if (e.keyCode === 13) {
+                geoCode();
+                return false;
+            }
+            return true;
+        };
+    }
+
+    // 3. 页面加载完成后开始加载API
+    window.onload = loadAMapScript;
+</script>
+</body>
+</html>
