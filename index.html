@@ -51,6 +51,21 @@
     var marker = new AMap.Marker();
     
     function geoCode() {
+         // 新增：执行函数时弹出提示，确认函数被触发
+    alert("函数开始执行了！");
+    var address  = document.getElementById('address').value.trim();
+    if (!address) {
+        alert("请输入有效的地址！");
+        return;
+    }
+    // 新增：打印地址到控制台，方便确认
+    console.log("要解析的地址：", address);
+    // 原有逻辑...
+    geocoder.getLocation(address, function(status, result) {
+        // 新增：打印API响应结果，哪怕无报错也能看到
+        console.log("高德API返回状态：", status);
+        console.log("高德API返回数据：", result);
+        
         var address  = document.getElementById('address').value;
         // 空地址校验
         if (!address.trim()) {
@@ -81,3 +96,4 @@
 </script>
 </body>
 </html>
+
