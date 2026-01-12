@@ -10,36 +10,20 @@
         html,body,#container{
             height:100%;
             width:100%;
-            margin: 0;
-            padding: 0;
-        }
-        .input-card{
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width:28rem;
-            z-index: 999;
-            background: #fff;
-            padding: 10px;
-            border-radius: 4px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .btn{
             width:10rem;
-            margin-left:6.8rem;
-            margin-top: 10px;
-            padding: 6px 0;
-            cursor: pointer;
+            margin-left:6.8rem;   
         }
     </style>
 </head>
 <body>
 <div id="container"></div>
-<div class="input-card">
+<div class="input-card" style='width:28rem;'>
     <label style='color:grey'>地理编码，根据地址获取经纬度坐标</label>
     <div class="input-item">
             <div class="input-item-prepend"><span class="input-item-text" >地址</span></div>
-            <input id='address' type="text" value='' placeholder="请输入完整地址（如：广东省广州市黄埔区云埔三路12号）">
+            <input id='address' type="text" value='' >
     </div>
     <div class="input-item">
             <div class="input-item-prepend"><span class="input-item-text">经纬度</span></div>
@@ -47,113 +31,43 @@
     </div>
     <input id="geo" type="button" class="btn" value="地址 -> 经纬度" />
 </div>
-
+<script src="https://a.amap.com/jsapi_demos/static/demo-center/js/demoutils.js"></script>
+<script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=5215182a065a92dd6b2d5224b4ddf347&plugin=AMap.Geocoder"></script>
 <script type="text/javascript">
-    // 1. 安全配置（如果你的Key开启了安全密钥，取消注释并填写）
-    window._AMapSecurityConfig = {
-        securityJsCode: "956638c128dbca0c7060284630830f19" // 你提供的安全密钥，先启用
-    };
-
-    // 2. 全局变量声明（避免回调函数作用域问题）
-    var map, geocoder, marker;
-
-    // 3. 直接加载高德API（放弃异步callback，改用加载完成后检测）
-    var script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = 'https://webapi.amap.com/maps?v=2.0&key=5215182a065a92dd6b2d5224b4ddf347&plugin=AMap.Geocoder';
+    var map = new AMap.Map("container", {
+        resizeEnable: true
+    });
     
-    // API加载成功后的初始化
-    script.onload = function() {
-        initAMap();
-    };
+    var geocoder = new AMap.Geocoder({
+        city: "全国", //城市设为北京，默认：“全国”
+    });
     
-    // API加载失败提示
-    script.onerror = function() {
-        alert('高德地图API加载失败！请检查：1.Key是否正确 2.安全密钥是否匹配 3.网络是否正常');
-        console.error('API加载失败，Key：5215182a065a92dd6b2d5224b4ddf347');
-    };
+    var marker = new AMap.Marker();
     
-    document.body.appendChild(script);
-
-    // 4. 初始化地图和核心逻辑（确保DOM和API都加载完成）
-    function initAMap() {
-        // 等待DOM完全加载
-        if (document.readyState !== 'complete') {
-            document.addEventListener('DOMContentLoaded', function() {
-                initMapCore();
-            });
-        } else {
-            initMapCore();
-        }
-    }
-
-    // 5. 核心地图初始化
-    function initMapCore() {
-        // 初始化地图
-        map = new AMap.Map("container", {
-            resizeEnable: true,
-            center: [116.397428, 39.90923], // 默认北京
-            zoom: 13
-        });
-        
-        // 初始化地理编码插件（指定城市，提高解析精度）
-        geocoder = new AMap.Geocoder({
-            city: "全国" // 可改为具体城市，如"广州市"
-        });
-        
-        // 初始化标记点
-        marker = new AMap.Marker();
-        
-        // 绑定按钮点击事件（确保DOM元素存在）
-        var geoBtn = document.getElementById("geo");
-        var addressInput = document.getElementById("address");
-        if (geoBtn && addressInput) {
-            geoBtn.onclick = geoCode;
-            // 绑定回车事件
-            addressInput.onkeydown = function(e) {
-                if (e.keyCode === 13) {
-                    geoCode();
-                    return false;
-                }
-                return true;
-            };
-        } else {
-            alert('DOM元素加载失败！');
-        }
-    }
-
-    // 6. 核心地理编码函数（增加日志，方便排查）
     function geoCode() {
-        var address = document.getElementById('address').value.trim();
-        console.log('输入的地址：', address);
-        
-        // 空地址校验
-        if (!address) {
-            alert("请输入有效地址！");
-            return;
-        }
-        
-        // 调用高德地理编码API
+        var address  = document.getElementById('address').value;
         geocoder.getLocation(address, function(status, result) {
-            console.log('解析状态：', status, '解析结果：', result); // 打印日志，方便排查
-            
-            if (status === 'complete' && result.geocodes && result.geocodes.length > 0) {
-                var lnglat = result.geocodes[0].location;
-                // 显式拼接经纬度
-                document.getElementById('lnglat').value = lnglat.lng + "," + lnglat.lat;
-                // 地图定位并添加标记
+            if (status === 'complete'&&result.geocodes.length) {
+                var lnglat = result.geocodes[0].location
+                document.getElementById('lnglat').value = lnglat;
                 marker.setPosition(lnglat);
                 map.add(marker);
-                map.setFitView(marker); // 自适应视野
-            } else {
-                document.getElementById('lnglat').value = '';
-                var errorMsg = result?.info || '地址不存在/格式错误/API权限不足';
-                alert('地址解析失败：' + errorMsg);
-                console.error('解析失败详情：', result);
+                map.setFitView(marker);
+            }else{
+                log.error('根据地址查询位置失败');
             }
         });
     }
+    document.getElementById("geo").onclick = geoCode;
+    document.getElementById('address').onkeydown = function(e) {
+        if (e.keyCode === 13) {
+            geoCode();
+            return false;
+        }
+        return true;
+    };
 </script>
 </body>
-</html
+</html>
+
 
