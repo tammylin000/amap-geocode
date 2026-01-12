@@ -45,19 +45,26 @@
     var marker = new AMap.Marker();
     
     function geoCode() {
-        var address  = document.getElementById('address').value;
-        geocoder.getLocation(address, function(status, result) {
-            if (status === 'complete'&&result.geocodes.length) {
-                var lnglat = result.geocodes[0].location
-                document.getElementById('lnglat').value = lnglat;
-                marker.setPosition(lnglat);
-                map.add(marker);
-                map.setFitView(marker);
-            }else{
-                log.error('根据地址查询位置失败');
-            }
-        });
-    }
+    var address = document.getElementById('address').value.trim();
+    console.log('输入地址：', address);
+    
+    geocoder.getLocation(address, function(status, result) {
+        // 打印API返回的状态和原始结果
+        console.log('API请求状态：', status);
+        console.log('API返回结果：', result);
+        
+        if (status === 'complete' && result.geocodes && result.geocodes.length > 0) {
+            var lnglat = result.geocodes[0].location;
+            document.getElementById('lnglat').value = lnglat.lng + "," + lnglat.lat;
+            marker.setPosition(lnglat);
+            map.add(marker);
+            map.setFitView(marker);
+        } else {
+            document.getElementById('lnglat').value = '';
+            alert('解析失败，状态：' + status + '，原因：' + (result?.info || '未知错误'));
+        }
+    });
+}
     document.getElementById("geo").onclick = geoCode;
     document.getElementById('address').onkeydown = function(e) {
         if (e.keyCode === 13) {
@@ -69,5 +76,6 @@
 </script>
 </body>
 </html>
+
 
 
