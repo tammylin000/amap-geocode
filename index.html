@@ -5,10 +5,30 @@
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
     <title>地址转经纬度</title>
     <style>
-        body { padding: 20px; }
-        #address, #lnglat { width: 300px; height: 30px; margin: 10px 0; }
-        #geo { padding: 8px 20px; cursor: pointer; }
-        #container { width: 100%; height: 400px; margin-top: 20px; border: 1px solid #ccc; }
+       html,body,#container{
+            height:100%;
+            width:100%;
+            margin: 0;
+            padding: 0;
+        }
+        #address, #geo, #lnglat {
+            width: 20rem;
+            padding: 0.8rem 1.2rem;
+            font-size: 1.1rem;
+            margin: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        #geo {
+            background: #0091ff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #geo:hover {
+            background: #007acc;
+        }
     </style>
 </head>
 <body>
@@ -19,7 +39,7 @@
 
     <script>
         window._AMapSecurityConfig = {
-            securityJsCode: '956638c128dbca0c7060284630830f19' // 替换为自己的
+            securityJsCode: '956638c128dbca0c7060284630830f19'
         };
     </script>
     <script src="https://webapi.amap.com/maps?v=2.0&key=5215182a065a92dd6b2d5224b4ddf347&securityCode=956638c128dbca0c7060284630830f19&plugin=AMap.Geocoder"></script>
@@ -27,9 +47,16 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var map = new AMap.Map("container", { resizeEnable: true });
-            // 关键修改：city设为空字符串（全国范围解析）
             var geocoder = new AMap.Geocoder({ city: "" });
-            var marker = new AMap.Marker();
+            
+            // 核心修改：缩小Marker图标尺寸（从25,34改为15,20，比例适配不变形）
+            var marker = new AMap.Marker({
+                icon: new AMap.Icon({
+                    image: "https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png",
+                    size: new AMap.Size(15, 20), // 图标显示尺寸（调小）
+                    imageSize: new AMap.Size(15, 20) // 图标原始尺寸（同步调小）
+                })
+            });
 
             function geoCode() {
                 var address = document.getElementById('address').value.trim();
@@ -43,7 +70,6 @@
                     console.log("API响应状态：", status);
                     console.log("API响应数据：", result);
                     
-                    // 完善判空，确保提示更精准
                     if (status === 'complete') {
                         if (result.geocodes && result.geocodes.length > 0) {
                             var lnglat = result.geocodes[0].location;
@@ -53,7 +79,7 @@
                             map.setFitView(marker);
                         } else {
                             alert("解析失败：当前地址无匹配结果");
-                            document.getElementById('lnglat').value = ""; // 清空之前的坐标
+                            document.getElementById('lnglat').value = "";
                         }
                     } else {
                         alert("解析失败：" + (result?.info || "API调用异常"));
