@@ -2,98 +2,77 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
-    <title>地理编码(地址->经纬度)</title>
-    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css"/>
+    <title>地址转经纬度</title>
     <style>
-        html,body,#container{
-            height:100%;
-            width:100%;
-        }
-        .btn{
-            width:10rem;
-            margin-left:6.8rem;   
-        }
+        body { padding: 20px; }
+        #address, #lnglat { width: 300px; height: 30px; margin: 10px 0; }
+        #geo { padding: 8px 20px; cursor: pointer; }
+        #container { width: 100%; height: 400px; margin-top: 20px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
-<div id="container"></div>
-<div class="input-card" style='width:28rem;'>
-    <label style='color:grey'>地理编码，根据地址获取经纬度坐标</label>
-    <div class="input-item">
-            <div class="input-item-prepend"><span class="input-item-text" >地址</span></div>
-            <input id='address' type="text" value='' >
-    </div>
-    <div class="input-item">
-            <div class="input-item-prepend"><span class="input-item-text">经纬度</span></div>
-            <input id='lnglat' disabled type="text">
-    </div>
-    <input id="geo" type="button" class="btn" value="地址 -> 经纬度" />
-</div>
-<script src="https://a.amap.com/jsapi_demos/static/demo-center/js/demoutils.js"></script>
-<!-- 核心修改：新增安全密钥参数 securityCode -->
-<script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=5215182a065a92dd6b2d5224b4ddf347&securityCode=956638c128dbca0c7060284630830f19&plugin=AMap.Geocoder"></script>
-<script type="text/javascript">
-    // 初始化地图时也可配置安全密钥（双重保障，可选）
-    window._AMapSecurityConfig = {
-        securityJsCode: '956638c128dbca0c7060284630830f19' // 和上面的securityCode值一致
-    };
+    <input id="address" type="text" placeholder="输入地址，如：北京市朝阳区阜荣街10号" value="北京市朝阳区阜荣街10号">
+    <button id="geo">地址 → 经纬度</button>
+    <input id="lnglat" disabled placeholder="经纬度结果">
+    <div id="container"></div>
 
-    var map = new AMap.Map("container", {
-        resizeEnable: true
-    });
-    
-    var geocoder = new AMap.Geocoder({
-        city: "全国", // 城市设为北京，如需全国范围可改为""或其他城市编码
-    });
-    
-    var marker = new AMap.Marker();
-    
-    function geoCode() {
-         // 新增：执行函数时弹出提示，确认函数被触发
-    alert("函数开始执行了！");
-    var address  = document.getElementById('address').value.trim();
-    if (!address) {
-        alert("请输入有效的地址！");
-        return;
-    }
-    // 新增：打印地址到控制台，方便确认
-    console.log("要解析的地址：", address);
-    // 原有逻辑...
-    geocoder.getLocation(address, function(status, result) {
-        // 新增：打印API响应结果，哪怕无报错也能看到
-        console.log("高德API返回状态：", status);
-        console.log("高德API返回数据：", result);
-        
-        var address  = document.getElementById('address').value;
-        // 空地址校验
-        if (!address.trim()) {
-            alert("请输入有效的地址！");
-            return;
-        }
-        geocoder.getLocation(address, function(status, result) {
-            if (status === 'complete'&&result.geocodes.length) {
-                var lnglat = result.geocodes[0].location
-                document.getElementById('lnglat').value = lnglat.lng + "," + lnglat.lat;
-                marker.setPosition(lnglat);
-                map.add(marker);
-                map.setFitView(marker);
-            }else{
-                console.error('根据地址查询位置失败:', result);
-                alert("地址解析失败，请检查地址是否正确！");
+    <!-- 1. 先加载高德地图JS，配置Key和安全密钥 -->
+    <script>
+        // 安全密钥配置（先定义，确保地图加载时能读到）
+        window._AMapSecurityConfig = {
+            securityJsCode: '956638c128dbca0c7060284630830f19' // 替换为自己的
+        };
+    </script>
+    <script src="https://webapi.amap.com/maps?v=2.0&key=5215182a065a92dd6b2d5224b4ddf347&securityCode=956638c128dbca0c7060284630830f19&plugin=AMap.Geocoder"></script>
+
+    <!-- 2. 所有逻辑放在DOM加载完成后执行（核心修复） -->
+    <script>
+        // 等待页面所有元素加载完成后再执行代码
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化地图
+            var map = new AMap.Map("container", { resizeEnable: true });
+            // 初始化地理编码插件
+            var geocoder = new AMap.Geocoder({ city: "010" });
+            var marker = new AMap.Marker();
+
+            // 核心解析函数
+            function geoCode() {
+                var address = document.getElementById('address').value.trim();
+                if (!address) {
+                    alert("请输入有效地址！");
+                    return;
+                }
+                console.log("执行解析，地址：", address);
+                
+                geocoder.getLocation(address, function(status, result) {
+                    console.log("API响应状态：", status);
+                    console.log("API响应数据：", result);
+                    
+                    if (status === 'complete' && result.geocodes && result.geocodes.length) {
+                        var lnglat = result.geocodes[0].location;
+                        document.getElementById('lnglat').value = lnglat.lng + "," + lnglat.lat;
+                        marker.setPosition(lnglat);
+                        map.add(marker);
+                        map.setFitView(marker);
+                    } else {
+                        alert("解析失败！原因：" + (result?.info || "地址无匹配结果"));
+                    }
+                });
             }
+
+            // 绑定点击事件（此时元素已加载，绑定必成功）
+            document.getElementById("geo").onclick = geoCode;
+            // 绑定回车事件
+            document.getElementById('address').onkeydown = function(e) {
+                if (e.keyCode === 13) { geoCode(); return false; }
+                return true;
+            };
+
+            // 验证初始化结果（控制台可见）
+            console.log("地图初始化完成：", map);
+            console.log("地理编码插件初始化完成：", geocoder);
         });
-    }
-    document.getElementById("geo").onclick = geoCode;
-    document.getElementById('address').onkeydown = function(e) {
-        if (e.keyCode === 13) {
-            geoCode();
-            return false;
-        }
-        return true;
-    };
-</script>
+    </script>
 </body>
 </html>
-
